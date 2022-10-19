@@ -11,20 +11,9 @@ model BaseWaterCooled "Base model for validating CHW plant template with water-c
   parameter Integer nChi=2
     "Number of chillers"
     annotation (Evaluate=true, Dialog(group="Configuration"));
-  parameter Integer nPumChiWatPri=nChi
-    "Number of primary CHW pumps"
-    annotation (Evaluate=true, Dialog(group="Configuration"));
-  parameter Integer nPumConWat=nChi
-    "Number of CW pumps"
-    annotation (Evaluate=true, Dialog(group="Configuration"));
-  parameter Integer nCoo=nChi
-    "Number of cooler units"
-    annotation (Evaluate=true, Dialog(group="Configuration",
-    enable=typChi==Buildings.Templates.Components.Types.Chiller.WaterCooled));
-  parameter Integer nPumChiWatSec=nChi
-    annotation (Evaluate=true, Dialog(group="Configuration"));
 
-  parameter Buildings.Templates.ChilledWaterPlants.Validation.UserProject.Data.AllSystems dat
+  replaceable parameter Buildings.Templates.ChilledWaterPlants.Validation.UserProject.Data.AllSystemsWaterCooled dat
+    constrainedby Buildings.Templates.ChilledWaterPlants.Validation.UserProject.Data.AllSystems
     "Design and operating parameters"
     annotation (Placement(transformation(extent={{70,70},{90,90}})));
 
@@ -58,8 +47,6 @@ model BaseWaterCooled "Base model for validating CHW plant template with water-c
     redeclare final package MediumChiWat = MediumChiWat,
     redeclare replaceable package MediumCon = MediumConWat,
     final nChi=nChi,
-    final nPumChiWatPri=nPumChiWatPri,
-    final nPumConWat=nPumConWat,
     final energyDynamics=energyDynamics,
     final tau=tau,
     final dat=dat._CHI)

@@ -85,7 +85,7 @@ partial model PartialChilledWaterPlant "Interface class for CHW plant"
     final min=0)=nChi
     "Number of CW pumps"
     annotation (Evaluate=true, Dialog(group="Configuration",
-    enable=typChi == Buildings.Templates.Components.Types.Chiller.WaterCooled
+    enable=typChi==Buildings.Templates.Components.Types.Chiller.WaterCooled
            and typArrPumConWat == Buildings.Templates.Components.Types.PumpArrangement.Headered));
   // The following parameter stores the user selection.
   parameter Buildings.Templates.Components.Types.PumpArrangement
@@ -141,11 +141,14 @@ partial model PartialChilledWaterPlant "Interface class for CHW plant"
 
   parameter Integer nPumChiWatSec(
     start=1,
-    final min=0)=nChi
+    final min=0)=if typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Constant1Only
+     or typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1Only then 0
+    else nChi
     "Number of secondary CHW pumps"
     annotation (Evaluate=true, Dialog(group="Configuration",
     enable=typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Constant1Variable2
-     or typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1And2));
+     or typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1And2
+     or typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1And2Distributed));
   parameter Integer nLooChiWatSec=1
     "Number of secondary CHW loops for distributed secondary distribution"
     annotation (Evaluate=true, Dialog(group="Configuration",

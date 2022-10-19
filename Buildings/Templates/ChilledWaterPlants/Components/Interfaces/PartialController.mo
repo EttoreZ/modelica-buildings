@@ -185,7 +185,7 @@ partial block PartialController "Interface class for plant controller"
     annotation (Evaluate=true, Dialog(group="Configuration", enable=
     typChi == Buildings.Templates.Components.Types.Chiller.WaterCooled));
   parameter Boolean is_clsCpl=true
-    "Set to true if the plant is close coupled, i.e. pipe length from chillers to coolers under 100 feet"
+    "Set to true if the plant is close coupled (pipe length from chillers to coolers under 30 m)"
     annotation (Evaluate=true, Dialog(group="Configuration", enable=
     typ==Buildings.Templates.ChilledWaterPlants.Types.Controller.Guideline36));
   parameter Boolean have_senLevCoo=false
@@ -235,7 +235,75 @@ partial block PartialController "Interface class for plant controller"
         extent={{-20,20},{20,-20}},
         rotation=90,
         origin={100,0})));
-
+protected
+  Buildings.Templates.Components.Interfaces.Bus busChi[nChi]
+    "Chiller control bus"
+    annotation (Placement(transformation(extent={{200,180},{240,220}}),
+                        iconTransformation(extent={{-756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busCoo[nCoo]
+    if typCoo<>Buildings.Templates.Components.Types.Cooler.None
+    "Cooler control bus"
+    annotation (Placement(transformation(extent={{200,-120},
+            {240,-80}}), iconTransformation(extent={{-756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busValCooInlIso[nCoo]
+    if typValCooInlIso<>Buildings.Templates.Components.Types.Valve.None
+    "Cooler inlet isolation valve control bus"
+    annotation (Placement(
+        transformation(extent={{200,-160},{240,-120}}),iconTransformation(
+          extent={{-756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busValCooOutIso[nCoo]
+    if typValCooOutIso<>Buildings.Templates.Components.Types.Valve.None
+    "Cooler outlet isolation valve control bus"
+    annotation (Placement(
+        transformation(extent={{200,-200},{240,-160}}), iconTransformation(
+          extent={{-756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busValChiWatChiIso[nChi]
+    if typValChiWatChiIso<>Buildings.Templates.Components.Types.Valve.None
+    "Chiller CHW isolation valve control bus"
+    annotation (Placement(
+        transformation(extent={{200,140},{240,180}}), iconTransformation(extent=
+           {{-756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busValConWatChiIso[nChi]
+    if typValConWatChiIso<>Buildings.Templates.Components.Types.Valve.None
+    "Chiller CW isolation valve control bus"
+    annotation (Placement(
+        transformation(extent={{200,100},{240,140}}),
+                                                    iconTransformation(extent={{
+            -756,150},{-716,190}})));
+  Buildings.Templates.Components.Interfaces.Bus busValChiWatChiByp[nChi] if
+    typArrChi == Buildings.Templates.ChilledWaterPlants.Types.ChillerArrangement.Series
+    "Chiller CHW bypass valve control bus - Series chillers" annotation (
+      Placement(transformation(extent={{200,60},{240,100}}), iconTransformation(
+          extent={{-422,198},{-382,238}})));
+equation
+  connect(busValChiWatChiIso, bus.valChiWatChiIso) annotation (Line(
+      points={{220,160},{240,160},{240,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busChi, bus.chi) annotation (Line(
+      points={{220,200},{250,200},{250,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busCoo, bus.coo) annotation (Line(
+      points={{220,-100},{220,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busValCooInlIso, bus.valCooInlIso) annotation (Line(
+      points={{220,-140},{240,-140},{240,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busValCooOutIso, bus.valCooOutIso) annotation (Line(
+      points={{220,-180},{250,-180},{250,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busValChiWatChiByp, bus.valChiWatChiByp) annotation (Line(
+      points={{220,80},{220,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
+  connect(busValConWatChiIso, bus.valConWatChiIso) annotation (Line(
+      points={{220,120},{232,120},{232,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5));
   annotation (
     Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}}),
                                                       graphics={
@@ -255,6 +323,15 @@ partial block PartialController "Interface class for plant controller"
 is only controlled based on a local differential pressure
 sensor.
 However, that option is not supported by G36.
+</p>
+<p>
+Array instances of nested expandable connectors are systematically
+declared here to enhance support across various Modelica tools.
+A typical connect clause such as 
+<code>connect(bus.nestedBus[:].y, sensor[:].y)</code>
+raises issues when <code>nestedBus</code> is not explicitly declared
+as Modelica compilers cannot decide to which variable the dimensionality
+should be assigned between <code>nestedBus</code> and <code>nestedBus.y</code>.
 </p>
 </html>"));
 end PartialController;

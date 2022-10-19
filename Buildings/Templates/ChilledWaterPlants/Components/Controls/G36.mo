@@ -35,23 +35,26 @@ block G36 "Guideline 36 controller for CHW plant"
     "Chiller type. Recommended staging order: positive displacement, variable speed centrifugal, constant speed centrifugal"
     annotation (Dialog(tab="General", group="Chillers configuration"));
 
-  final parameter Real chiDesCap[nChi](unit="W")=dat.capChi_nominal
+  final parameter Real chiDesCap[nChi](
+    each final unit="W")=dat.capChi_nominal
     "Design chiller capacities vector"
     annotation (Dialog(tab="General", group="Chillers configuration"));
 
-  final parameter Real chiMinCap[nChi](unit="W")=dat.capUnlChi_min
+  final parameter Real chiMinCap[nChi](
+    each final unit="W")=dat.capUnlChi_min
     "Chiller minimum cycling loads vector"
     annotation (Dialog(tab="General", group="Chillers configuration"));
 
   final parameter Real TChiWatSupMin[nChi](
-    unit="K",
-    displayUnit="degC")=dat.TChiWatChiSup_nominal
+    each final unit="K",
+    each displayUnit="degC")=dat.TChiWatChiSup_nominal
     "Minimum chilled water supply temperature"
     annotation (Dialog(tab="General", group="Chillers configuration"));
 
+  // FIXME #2299: Should be provided for each chiller.
   final parameter Real minChiLif(
-    unit="K",
-    displayUnit="K")=dat.dTLifChi_min
+    final unit="K",
+    displayUnit="K")=dat.dTLifChi_min[1]
     "Minimum allowable lift at minimum load for chiller"
     annotation(Dialog(tab="General", group="Chillers configuration", enable=not have_heaPreConSig));
 
@@ -224,11 +227,13 @@ block G36 "Guideline 36 controller for CHW plant"
 
   // ---- Minimum flow bypass ----
 
-  final parameter Real minFloSet[nChi](unit="m3/s")=dat.VChiWatChi_flow_min
+  final parameter Real minFloSet[nChi](
+    each final unit="m3/s")=dat.VChiWatChi_flow_min
     "Minimum chilled water flow through each chiller"
     annotation(Dialog(tab="Minimum flow bypass", group="Flow limits"));
 
-  final parameter Real maxFloSet[nChi](unit="m3/s")=dat.VChiWatChi_flow_nominal
+  final parameter Real maxFloSet[nChi](
+    each final unit="m3/s")=dat.VChiWatChi_flow_nominal
     "Maximum chilled water flow through each chiller"
     annotation(Dialog(tab="Minimum flow bypass", group="Flow limits"));
 
@@ -269,7 +274,9 @@ block G36 "Guideline 36 controller for CHW plant"
     "Minimum chilled water pump differential static pressure, default 5 psi"
     annotation (Dialog(tab="Plant Reset", group="Chilled water supply"));
 
-  final parameter Real dpChiWatPumMax[nSenChiWatPum](unit="Pa", displayUnit="Pa")=
+  final parameter Real dpChiWatPumMax[nSenChiWatPum](
+    each final unit="Pa",
+    each displayUnit="Pa")=
     dat.dpChiWatRemSet_nominal
     "Maximum chilled water pump differential static pressure, the array size equals to the number of remote pressure sensor"
     annotation (Dialog(tab="Plant Reset", group="Chilled water supply"));
@@ -287,19 +294,20 @@ block G36 "Guideline 36 controller for CHW plant"
     annotation (Dialog(tab="Cooling Towers", group="Fan speed"));
 
   // Fan speed control: controlling condenser return water temperature when WSE is not enabled
-  final parameter Real LIFT_min[nChi](unit="K")=dat.dTLifChi_min
+  final parameter Real LIFT_min[nChi](
+    each final unit="K")=dat.dTLifChi_min
     "Minimum LIFT of each chiller"
     annotation (Evaluate=true, Dialog(tab="Cooling Towers", group="Fan speed: Return temperature control"));
 
   final parameter Real TConWatSup_nominal[nChi](
-    unit="K",
-    displayUnit="degC")=dat.TConWatChiSup_nominal
+    each final unit="K",
+    each displayUnit="degC")=dat.TConWatChiSup_nominal
     "Condenser water supply temperature (condenser entering) of each chiller"
     annotation (Evaluate=true, Dialog(tab="Cooling Towers", group="Fan speed: Return temperature control"));
 
   final parameter Real TConWatRet_nominal[nChi](
-    unit="K",
-    displayUnit="degC")=dat.TConWatChiRet_nominal
+    each final unit="K",
+    each displayUnit="degC")=dat.TConWatChiRet_nominal
     "Condenser water return temperature (condenser leaving) of each chiller"
     annotation (Evaluate=true, Dialog(tab="Cooling Towers", group="Fan speed: Return temperature control"));
 
@@ -526,15 +534,18 @@ block G36 "Guideline 36 controller for CHW plant"
     "#2299 Various plant configurations not covered: only modulating valve in controller"
     annotation (Placement(transformation(extent={{120,-110},{140,-90}})));
   Modelica.Blocks.Routing.RealPassThrough FIXME_yMinValPosSet
- if typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1Only
+    if typDisChiWat==Buildings.Templates.ChilledWaterPlants.Types.Distribution.Variable1Only
     "#2299 Missing dependency to plant configuration"
     annotation (Placement(transformation(extent={{120,-150},{140,-130}})));
-  Buildings.Controls.OBC.CDL.Continuous.MultiSum FIXME_yTowFanSpe(final k=fill(1
-        /nCoo, nCoo), final nin=1) if have_varPumChiWatPri
+  Buildings.Controls.OBC.CDL.Continuous.MultiSum FIXME_yTowFanSpe(
+    final k=fill(1/nCoo, nCoo),
+    final nin=nCoo) if have_varPumChiWatPri
     "#2299 Should be scalar and conditional"
     annotation (Placement(transformation(extent={{120,-270},{140,-250}})));
+
 protected
-  Integer idx;
+  Integer idx
+    "Iteration variable for algorithm section";
 initial algorithm
   idx := 1;
   if typEco<>Buildings.Templates.ChilledWaterPlants.Types.Economizer.None then
@@ -558,14 +569,14 @@ algorithm
   end when;
 equation
   /* Control point connection - start */
-  connect(bus.chi.y1ChiWatReq,ctl. uChiWatReq);
-  connect(bus.chi.y1ConWatReq,ctl. uConWatReq);
-  connect(bus.pumChiWatPri.y1_actual,ctl. uChiWatPum);
-  connect(bus.dpChiWatLoc,ctl. dpChiWat_local);
-  connect(bus.dpChiWatRem,ctl. dpChiWat_remote);
-  connect(bus.VChiWatPri_flow,ctl. VChiWat_flow);
-  connect(bus.chi.y1_actual,ctl. uChi);
-  connect(bus.TChiWatEcoAft,ctl. TChiWatRetDow);
+  connect(busChi.y1ChiWatReq, ctl.uChiWatReq);
+  connect(busChi.y1ConWatReq, ctl.uConWatReq);
+  connect(bus.pumChiWatPri.y1_actual, ctl.uChiWatPum);
+  connect(bus.dpChiWatLoc, ctl.dpChiWat_local);
+  connect(bus.dpChiWatRem, ctl.dpChiWat_remote);
+  connect(bus.VChiWatPri_flow, ctl.VChiWat_flow);
+  connect(busChi.y1_actual, ctl.uChi);
+  connect(bus.TChiWatEcoAft, ctl.TChiWatRetDow);
   // The two following bus signals are exclusive from on another.
   // FIXME #2299: However, the use of those signals for capacity requirement in primary-only plants is incorrect.
   connect(bus.TChiWatEcoBef,ctl. TChiWatRet);
@@ -580,7 +591,7 @@ equation
   connect(bus.pumChiWatEco.y1_actual,ctl. uEcoPum);
   connect(bus.TChiWatEcoEnt,ctl. TEntHex);
   connect(bus.TOut,ctl. TOut);
-  connect(bus.coo.y1_actual, ctl.uTowSta);
+  connect(busCoo.y1_actual, ctl.uTowSta);
 
   connect(FIXME_uChiConIsoVal.y,ctl. uChiConIsoVal);
   connect(FIXME_uChiWatIsoVal.y,ctl. uChiWatIsoVal);
@@ -619,17 +630,17 @@ equation
   connect(FIXME_yChiPumSpe.y, bus.pumChiWatPri.y);
   connect(FIXME_yChiDem.u, ctl.yChiDem);
   connect(ctl.yChi, bus.y1Chi);
-  connect(FIXME1_yHeaPreConVal.y, bus.valConWatChiIso.y1);
-  connect(FIXME_yHeaPreConVal.y, bus.valConWatChiIso.y);
+  connect(FIXME1_yHeaPreConVal.y, busValConWatChiIso.y1);
+  connect(FIXME_yHeaPreConVal.y, busValConWatChiIso.y);
   connect(ctl.yConWatPum, bus.pumConWat.y1);
   connect(ctl.yConWatPumSpe, FIXME1_yConWatPumSpe.u);
   connect(FIXME1_yConWatPumSpe.y, bus.pumConWat.y);
   connect(FIXME_yConWatPumSpe.y, bus.pumConWat.y);
-  connect(FIXME1_yChiWatIsoVal.y, bus.valChiWatChiIso.y1);
-  connect(FIXME_yChiWatIsoVal.y, bus.valChiWatChiIso.y);
+  connect(FIXME1_yChiWatIsoVal.y, busValChiWatChiIso.y1);
+  connect(FIXME_yChiWatIsoVal.y, busValChiWatChiIso.y);
   connect(FIXME_yMinValPosSet.y, bus.valChiWatMinByp.y);
-  connect(FIXME_yTowCelIsoVal.y, bus.valCooInlIso.y1);
-  connect(FIXME_yTowCelIsoVal.y, bus.valCooOutIso.y1);
+  connect(FIXME_yTowCelIsoVal.y, busValCooInlIso.y1);
+  connect(FIXME_yTowCelIsoVal.y, busValCooOutIso.y1);
   connect(FIXME_yTowFanSpe.y, bus.yCoo);
   connect(ctl.yTowCel, bus.y1Coo);
   /* Control point connection - stop */
@@ -650,6 +661,54 @@ equation
           -17.5},{34,-17.5},{34,-140},{118,-140}}, color={0,0,127}));
   connect(ctl.yTowFanSpe[1], FIXME_yTowFanSpe.u[1]) annotation (Line(points={{22,
           -28},{30,-28},{30,-260},{118,-260}}, color={0,0,127}));
+  connect(busChi, bus.chi) annotation (Line(
+      points={{220,180},{254,180},{254,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
+  connect(busCoo, bus.coo) annotation (Line(
+      points={{220,-100},{240,-100},{240,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
+  connect(busValCooInlIso, bus.valCooInlIso) annotation (Line(
+      points={{220,-140},{244,-140},{244,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
+  connect(busValCooOutIso, bus.valCooOutIso) annotation (Line(
+      points={{220,-180},{246,-180},{246,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
+  connect(busValConWatChiIso, bus.valConWatChiIso) annotation (Line(
+      points={{220,100},{240,100},{240,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
+  connect(busValChiWatChiIso, bus.valChiWatChiIso) annotation (Line(
+      points={{220,142},{240,142},{240,0},{260,0}},
+      color={255,204,51},
+      thickness=0.5), Text(
+      string="%second",
+      index=-1,
+      extent={{-6,3},{-6,3}},
+      horizontalAlignment=TextAlignment.Right));
   annotation (Documentation(info="<html>
 
 </html>"));
