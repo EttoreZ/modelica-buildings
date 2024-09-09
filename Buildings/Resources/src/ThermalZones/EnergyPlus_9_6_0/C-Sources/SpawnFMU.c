@@ -28,6 +28,7 @@ size_t AllocateBuildingDataStructure(
   const char* idfVersion,
   const char* idfName,
   const char* epwName,
+  const runPeriod* runPer,
   double relativeSurfaceTolerance,
   int usePrecompiledFMU,
   const char* fmuName,
@@ -53,13 +54,13 @@ size_t AllocateBuildingDataStructure(
 
     /* Allocate memory */
   if (nFMU == 0)
-    Buildings_FMUS = malloc(sizeof(struct FMUBuilding*));
+    Buildings_FMUS = (FMUBuilding **)malloc(sizeof(struct FMUBuilding*));
   else
-    Buildings_FMUS = realloc(Buildings_FMUS, (nFMU+1) * sizeof(struct FMUBuilding*));
+    Buildings_FMUS = (FMUBuilding **)realloc(Buildings_FMUS, (nFMU+1) * sizeof(struct FMUBuilding*));
   if ( Buildings_FMUS == NULL )
     SpawnError("Not enough memory in SpawnFMU.c. to allocate array for Buildings_FMU.");
 
-  Buildings_FMUS[nFMU] = malloc(sizeof(FMUBuilding));
+  Buildings_FMUS[nFMU] = (FMUBuilding *)malloc(sizeof(FMUBuilding));
   if ( Buildings_FMUS[nFMU] == NULL )
     SpawnError("Not enough memory in SpawnFMU.c. to allocate array for Buildings_FMU[0].");
 
@@ -139,6 +140,12 @@ size_t AllocateBuildingDataStructure(
     SpawnFormatError);
   strcpy(Buildings_FMUS[nFMU]->weather, epwName);
 
+  /* Assign the RunPeriod object */
+  Buildings_FMUS[nFMU]->runPer = malloc(sizeof(runPeriod));
+  if ( Buildings_FMUS[nFMU]->runPer == NULL )
+    SpawnError("Not enough memory in SpawnFMU.c. to allocate array for Buildings_FMU[nFMU]->runPer.");
+  memcpy(Buildings_FMUS[nFMU]->runPer, runPer, sizeof(runPeriod));
+
   /* Set relative surface tolerance */
   Buildings_FMUS[nFMU]->relativeSurfaceTolerance = relativeSurfaceTolerance;
   /* Set the model hash to null */
@@ -217,7 +224,7 @@ void AddSpawnObjectToBuilding(SpawnObject* ptrSpaObj, const int logLevel){
       bui->time, bui->modelicaNameBuilding, nExcObj, ptrSpaObj->modelicaName);
 
   if (nExcObj == 0){
-    bui->exchange=malloc(sizeof(SpawnObject *));
+    bui->exchange = (void**)((SpawnObject **)malloc(sizeof(SpawnObject *)));
     if ( bui->exchange== NULL )
       SpawnError("Not enough memory in SpawnFMU.c. to allocate exc.");
   }
@@ -225,7 +232,7 @@ void AddSpawnObjectToBuilding(SpawnObject* ptrSpaObj, const int logLevel){
     /* We already have nExcObj > 0 exc */
 
     /* Increment size of vector that contains the exc. */
-    bui->exchange = realloc(bui->exchange, (nExcObj + 1) * sizeof(SpawnObject*));
+    bui->exchange = (void**)((SpawnObject **)realloc(bui->exchange, (nExcObj + 1) * sizeof(SpawnObject*)));
     if (bui->exchange == NULL){
       SpawnError("Not enough memory in SpawnFMU.c. to allocate memory for bld->exc.");
     }
@@ -321,6 +328,8 @@ void FMUBuildingFree(FMUBuilding* bui){
       free(bui->idfName);
     if (bui->weather != NULL)
       free(bui->weather);
+    if (bui->runPer != NULL)
+      free(bui->runPer);
     if (bui->exchange != NULL)
       free(bui->exchange);
     if (bui->tmpDir != NULL)
